@@ -2,6 +2,8 @@
 
 **A 24-band stereo equalizer plugin for macOS, Windows and Linux (VST3 · AU · CLAP · VST2).**
 
+Part of **[Epsilon Audio](https://github.com/natehouk/epsilon-plugins)**, a family of free, open-source plugins: Monolith, Caldera, Obsidian, Strata, Basalt, Gneiss, Mica and Flint.
+
 ![Mica](screenshot.png)
 
 Mica is a clean-room design with the feature set of FabFilter Pro-Q, FabFilter's seventh plugin (November 2009). It also includes the mouse-wheel Q adjustment and click-free band switching that arrived in Pro-Q 1.01. It was written from scratch, working only from FabFilter's public press releases. No FabFilter code, binaries, presets, artwork or trademarks were used.
