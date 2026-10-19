@@ -875,7 +875,7 @@ protected:
         if (saving) return true;
         if (ev.press) { statusFlash = 0; tipShown = false; tipSuppressed = tipKey; }
         if (helpOpen) { if (ev.press && ev.button == 1) helpClick(x, y); return true; }
-        if (ev.button == 3 && ev.press) {
+        if (ev.button == 2 && ev.press) {
             if (menuOpen) { const int m = menuHit(x, y); if (m >= 0 && menuItem(m).kind == 1) { pendingDelete = menuItem(m).idx; repaint(); } return true; }
             if (learnMode) { const int i = hit(x, y); if (i >= 0) { const uint32_t p = effParam(controls()[i]); if (p < kParamCount) { char b[24]; snprintf(b, sizeof b, "unmap:%u", p); setState("cmd", b); paramCC[p] = -1; repaint(); } } return true; }
             const int d = dotHit(x, y);
