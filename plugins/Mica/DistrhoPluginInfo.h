@@ -3,7 +3,7 @@
 
 #define DISTRHO_PLUGIN_BRAND   "Epsilon Audio"
 #define DISTRHO_PLUGIN_NAME    "Mica"
-#define DISTRHO_PLUGIN_URI     "https://epsilonrecords.com/plugins/mica"
+#define DISTRHO_PLUGIN_URI     "https://plugins.epsilonrecords.com/mica"
 #define DISTRHO_PLUGIN_CLAP_ID "com.epsilonrecords.mica"
 
 #define DISTRHO_PLUGIN_BRAND_ID  EpsA
