@@ -1,0 +1,97 @@
+name: build
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  macos:
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fetch DPF
+        run: git clone --depth 1 --recursive https://github.com/DISTRHO/DPF.git dpf
+      - name: Build universal (arm64 + x86_64)
+        env:
+          CFLAGS: -arch x86_64 -arch arm64 -mmacosx-version-min=10.13
+          CXXFLAGS: -arch x86_64 -arch arm64 -mmacosx-version-min=10.13
+          LDFLAGS: -arch x86_64 -arch arm64 -mmacosx-version-min=10.13
+        run: make -C plugins/Mica -j3
+      - name: Ad-hoc sign bundles
+        run: |
+          for b in bin/*.vst3 bin/*.component bin/*.vst bin/*.clap; do
+            [ -e "$b" ] && codesign --force --deep --sign - "$b"
+          done
+          lipo -info bin/Mica.vst3/Contents/MacOS/Mica
+      - name: Package
+        run: |
+          mkdir -p dist/macos-universal
+          cp -R bin/*.vst3 bin/*.component bin/*.clap dist/macos-universal/ 2>/dev/null || true
+          [ -e bin/Mica.vst ] && cp -R bin/Mica.vst dist/macos-universal/
+          cp docs/Mica-Manual.html dist/macos-universal/
+          cd dist && ditto -c -k --keepParent macos-universal Mica-macos-universal.zip
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Mica-macos-universal
+          path: dist/macos-universal
+      - uses: actions/upload-artifact@v4
+        with:
+          name: release-macos
+          path: dist/Mica-macos-universal.zip
+
+  windows:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - run: sudo apt-get update && sudo apt-get install -y mingw-w64
+      - run: git clone --depth 1 --recursive https://github.com/DISTRHO/DPF.git dpf
+      - run: make -C plugins/Mica -j3 WINDOWS=true CC=x86_64-w64-mingw32-gcc CXX=x86_64-w64-mingw32-g++
+      - run: |
+          mkdir -p dist/windows-x64 && cp -R bin/Mica.vst3 bin/Mica.clap bin/Mica-vst.dll docs/Mica-Manual.html dist/windows-x64/
+          cd dist && zip -r Mica-windows-x64.zip windows-x64
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Mica-windows-x64
+          path: dist/windows-x64
+      - uses: actions/upload-artifact@v4
+        with:
+          name: release-windows
+          path: dist/Mica-windows-x64.zip
+
+  linux:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - run: sudo apt-get update && sudo apt-get install -y libgl1-mesa-dev libx11-dev libxext-dev libxrandr-dev libxcursor-dev libdbus-1-dev
+      - run: git clone --depth 1 --recursive https://github.com/DISTRHO/DPF.git dpf
+      - run: make -C plugins/Mica -j3
+      - run: |
+          mkdir -p dist/linux-x64 && cp -R bin/Mica.vst3 bin/Mica.clap bin/Mica-vst.so docs/Mica-Manual.html dist/linux-x64/
+          cd dist && zip -r Mica-linux-x64.zip linux-x64
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Mica-linux-x64
+          path: dist/linux-x64
+      - uses: actions/upload-artifact@v4
+        with:
+          name: release-linux
+          path: dist/Mica-linux-x64.zip
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [macos, windows, linux]
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: release-*
+          path: dist
+          merge-multiple: true
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*.zip
