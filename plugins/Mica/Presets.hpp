@@ -19,6 +19,12 @@ static constexpr int kNumCategories = 5;
 #define HS(n, f, g) B(n, kHighShelf, f, g, 0.707f, 1, 0)
 #define LC(n, f, sl) B(n, kLowCut, f, 0, 0.707f, sl, 0)
 #define HC(n, f, sl) B(n, kHighCut, f, 0, 0.707f, sl, 0)
+// 2.0: DYN(band, range, threshold, attack, release); SPEC / EXT switch a dynamic band to spectral / external sidechain;
+// SL2(band, slope index) sets the slope of shapes other than cuts
+#define DYN(n, r, t, a, rl) {bp2(n,kB2Dyn),1},{bp2(n,kB2Range),r},{bp2(n,kB2Thresh),t},{bp2(n,kB2Attack),a},{bp2(n,kB2Release),rl}
+#define SPEC(n) {bp2(n,kB2Spectral),1}
+#define EXT(n) {bp2(n,kB2Source),1}
+#define SL2(n, i) {bp2(n,kB2Slope),i}
 #define END { kParamCount, 0 }
 namespace pv {
 static const PV init[] = { END };
@@ -57,6 +63,15 @@ static const PV hum60[]        = { BELL(0, 60, -24, 30), BELL(1, 120, -18, 30), 
 static const PV mud[]          = { BELL(0, 300, -4, 1.4f), END };
 static const PV boxy[]         = { BELL(0, 500, -4, 2), END };
 static const PV telephone[]    = { LC(0, 400, 3), HC(1, 3200, 3), BELL(2, 1500, 4, 1), END };
+// ---------------------------------------------------------------- 2.0 (appended: program numbers of the 1.x presets stay the same)
+static const PV deEssDyn[]     = { LC(0, 80, 2), BELL(1, 6500, 0, 3), DYN(1, -8, -35, 1, 60), END };
+static const PV harshSpec[]    = { BELL(0, 3200, 0, 1.2f), DYN(0, -6, -42, 5, 80), SPEC(0), END };
+static const PV kickDuckBass[] = { BELL(0, 70, 0, 1.2f), DYN(0, -6, -30, 2, 120), EXT(0), END };
+static const PV resTamer[]     = { BELL(0, 1500, 0, 0.35f), DYN(0, -5, -45, 3, 120), SPEC(0), END };
+static const PV analogAir[]    = { LC(0, 25, 2), HS(1, 12000, 3), {kProcMode, kNaturalPhase}, {kCharacter, kGentle}, END };
+static const PV warmTilt[]     = { B(0, kTiltShelf, 800, -2.5f, 0.707f, 1, 0), BELL(1, 120, 1.5f, 0.8f), {kCharacter, kWarm}, END };
+static const PV brickSub[]     = { B(0, kLowCut, 28, 0, 0.707f, 16, 0), END };
+static const PV radioBand[]    = { B(0, kBandPass, 1300, 0, 0.8f, 1, 0), SL2(0, 2), {kCharacter, kWarm}, END };
 } // namespace pv
 #undef B
 #undef BELL
@@ -64,6 +79,10 @@ static const PV telephone[]    = { LC(0, 400, 3), HC(1, 3200, 3), BELL(2, 1500, 
 #undef HS
 #undef LC
 #undef HC
+#undef DYN
+#undef SPEC
+#undef EXT
+#undef SL2
 #undef END
 
 static const PresetDef kPresetDefs[] = {
@@ -78,6 +97,9 @@ static const PresetDef kPresetDefs[] = {
     {"Wider Sides", "Mix & Master", pv::msWidth}, {"Mono Low End", "Mix & Master", pv::monoBass}, {"Loudness Curve", "Mix & Master", pv::loudness},
     {"Rumble Filter", "Corrective", pv::rumble}, {"Hum Remover 50 Hz", "Corrective", pv::hum50}, {"Hum Remover 60 Hz", "Corrective", pv::hum60},
     {"Mud Cut", "Corrective", pv::mud}, {"Boxiness", "Corrective", pv::boxy}, {"Telephone", "Corrective", pv::telephone},
+    {"Dynamic De-Ess", "Vocals", pv::deEssDyn}, {"Tame Harshness", "Vocals", pv::harshSpec}, {"Kick Ducks Bass", "Bass & Instruments", pv::kickDuckBass},
+    {"Resonance Tamer", "Mix & Master", pv::resTamer}, {"Analog Air", "Mix & Master", pv::analogAir}, {"Warm Tilt", "Mix & Master", pv::warmTilt},
+    {"Brickwall Sub Cut", "Corrective", pv::brickSub}, {"Radio Band", "Corrective", pv::radioBand},
 };
 static constexpr uint32_t kNumPresets = sizeof(kPresetDefs) / sizeof(kPresetDefs[0]);
 

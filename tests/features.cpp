@@ -104,7 +104,7 @@ int main() {
         Engine e = fresh(); e.p[kOutGain] = -6; e.reset();
         snprintf(msg, sizeof msg, "no bands, output -6 dB: %.2f dB", gainAt(e, 1000)); CHECK(std::fabs(gainAt(e, 1000) + 6) < 0.05f, msg);
         Engine a = fresh(); run(a, sine(4096, 1000, 0.5f), sine(4096, 1000, 0.5f));
-        float mx = 0; for (float v : a.ana) mx = std::max(mx, std::fabs(v));
+        float mx = 0; for (float v : a.anaPost) mx = std::max(mx, std::fabs(v));
         snprintf(msg, sizeof msg, "analyser ring receives the signal (write index %u, peak %.2f)", a.anaWrite.load(), mx); CHECK(a.anaWrite.load() == 4096 && std::fabs(mx - 0.5f) < 0.01f, msg);
     }
     printf("%s (%d failures)\n", fails ? "FAILED" : "ALL PASSED", fails);

@@ -17,7 +17,7 @@ int main() {
         const float rel = 20 * std::log10(std::sqrt(s / (N / 2)) / inR + 1e-9f);
         int used = 0; for (int b = 0; b < kNumBands; ++b) used += presets()[p].v[bp(b, kBUsed)] > 0.5f;
         const bool ok = !nf && rel > -15 && rel < 8; bad += !ok;
-        printf("%-18s %-19s %d bands  %s  level %+5.1f dB %s\n", presets()[p].name, presets()[p].category, used, e.latency() ? "linear" : "zero  ", rel, ok ? "" : "<-- CHECK");
+        printf("%-18s %-19s %d bands  %s  level %+5.1f dB %s\n", presets()[p].name, presets()[p].category, used, e.p[kProcMode] > 1.5f ? "natural" : (e.p[kProcMode] > 0.5f ? "linear " : (e.latency() ? "zero+sp" : "zero   ")), rel, ok ? "" : "<-- CHECK");
     }
     printf("%u presets, %d flagged\n", kNumPresets, bad); return bad;
 }

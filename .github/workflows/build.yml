@@ -8,6 +8,19 @@ on:
   workflow_dispatch:
 
 jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Engine tests (1.x behaviour, 2.0 features, 1.x compatibility, fuzz, presets)
+        run: |
+          set -e
+          for t in features features2 compat fuzz presets; do
+            g++ -std=c++17 -O2 -Iplugins/Mica -o tests/$t tests/$t.cpp
+            ./tests/$t > tests/$t.log || { tail -40 tests/$t.log | sed 's/^/::error::/'; exit 1; }
+            tail -2 tests/$t.log
+          done
+
   macos:
     runs-on: macos-14
     steps:

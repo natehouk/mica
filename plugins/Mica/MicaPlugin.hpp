@@ -1,4 +1,5 @@
-// Mica — DPF plugin wrapper: parameters, programs, MIDI learn, latency, analyser access for the UI. License: MIT.
+// Mica — DPF plugin wrapper: parameters, programs, sidechain, MIDI learn (including the active band), solo,
+// latency, analyser access for the UI. License: MIT.
 // Declared in a header so the UI can reach the analyser ring through DPF's direct access.
 #pragma once
 #include "DistrhoPlugin.hpp"
@@ -23,15 +24,23 @@ public:
 protected:
     const char* getLabel() const override { return "Mica"; }
     const char* getDescription() const override {
-        return "24-band stereo equalizer: bell, shelf and cut filters (6-48 dB/oct), zero-latency or linear-phase processing, "
+        return "24-band stereo equalizer: ten band shapes with slopes to 96 dB/oct and brickwall cuts, dynamic EQ and spectral "
+               "dynamics with external sidechain, zero-latency, natural-phase or linear-phase processing, character modes, "
                "stereo or mid/side with per-band channel selection, and a real-time spectrum analyser.";
     }
     const char* getMaker() const override { return "Epsilon Audio"; }
     const char* getHomePage() const override { return "https://epsilonrecords.com"; }
     const char* getLicense() const override { return "MIT"; }
-    uint32_t getVersion() const override { return d_version(1, 0, 1); }
+    uint32_t getVersion() const override { return d_version(2, 0, 0); }
 
     void initAudioPort(bool input, uint32_t index, AudioPort& port) override {
+        if (input && index >= 2) {                 // inputs 3-4: external sidechain (dynamic EQ trigger, analyser, EQ Match)
+            port.hints = kAudioPortIsSidechain;
+            port.name = index == 2 ? "Sidechain Left" : "Sidechain Right";
+            port.symbol = index == 2 ? "sc_left" : "sc_right";
+            port.groupId = kPortGroupNone;
+            return;
+        }
         port.groupId = kPortGroupStereo;
         Plugin::initAudioPort(input, index, port);
     }
@@ -70,12 +79,14 @@ protected:
             else if (std::strcmp(value, "cancel") == 0)     learnTarget = -1;
             else if (std::strncmp(value, "unmap:", 6) == 0) { const int p = std::atoi(value + 6); for (int& m : ccMap) if (m == p) m = -1; }
             else if (std::strcmp(value, "clear") == 0)      { for (int& m : ccMap) m = -1; }
+            else if (std::strncmp(value, "solo:", 5) == 0)  engine.soloBand = std::atoi(value + 5);
+            else if (std::strncmp(value, "active:", 7) == 0) activeBand = std::atoi(value + 7);
         }
     }
 
     void initProgramName(uint32_t i, String& name) override { name = presets()[i].name; }
     void loadProgram(uint32_t i) override {
-        for (uint32_t k = 0; k < kParamCount; ++k) if (!(paramDef(k).hints & kHintOutput)) engine.p[k] = presets()[i].v[k];
+        for (uint32_t k = 0; k < kParamCount; ++k) if (isSetting(k)) engine.p[k] = presets()[i].v[k];
     }
 
     float getParameterValue(uint32_t i) const override { return i == kOutLearn ? learnEcho : engine.p[i]; }
@@ -90,12 +101,12 @@ protected:
         const bool midiOn = engine.p[kMidiOn] > 0.5f;
         uint32_t pos = 0;
         // the processing mode decides the latency; report changes before processing this block
-        const uint32_t want = engine.p[kProcMode] > 0.5f ? (uint32_t)((2048u << std::min(2, std::max(0, (int)(engine.p[kLinQuality] + 0.5f)))) * 3 / 2) : 0u;
+        const uint32_t want = engine.wantedLatency();
         if (want != reportedLatency) { reportedLatency = want; setLatency(want); }
         for (uint32_t e = 0; e <= evCount; ++e) {
             const uint32_t until = e < evCount ? std::min(ev[e].frame, frames) : frames;
             if (until > pos) {
-                engine.process(inputs[0] + pos, inputs[1] + pos, outputs[0] + pos, outputs[1] + pos, until - pos);
+                engine.process(inputs[0] + pos, inputs[1] + pos, inputs[2] + pos, inputs[3] + pos, outputs[0] + pos, outputs[1] + pos, until - pos);
                 pos = until;
             }
             if (e == evCount) break;
@@ -104,14 +115,18 @@ protected:
             const uint8_t st = d[0] & 0xF0;
             if (st == 0xB0) {
                 const int cc = d[1] & 0x7F, val = d[2] & 0x7F;
-                if (learnTarget >= 0 && learnTarget < (int)kParamCount) {          // MIDI learn: bind this controller
+                if (learnTarget >= 0 && validTarget(learnTarget)) {               // MIDI learn: bind this controller
                     for (int& m : ccMap) if (m == learnTarget) m = -1;
                     ccMap[cc] = learnTarget;
                     learnSerial = (learnSerial + 1) % 8;
-                    learnEcho = (float)(learnSerial * 1000000 + learnTarget * 128 + cc + 1);
+                    const int echoTarget = learnTarget >= kActiveTarget ? (int)kParamCount + (learnTarget - kActiveTarget) : learnTarget;   // active-band targets echo as kParamCount + 0..2
+                    learnEcho = (float)(learnSerial * 1000000 + echoTarget * 128 + cc + 1);
                     learnTarget = -1;
                 }
-                const int prm = ccMap[cc];
+                int prm = ccMap[cc];
+                if (prm >= kActiveTarget) {                                         // the band selected in the editor
+                    prm = (activeBand >= 0 && activeBand < kNumBands && engine.p[bp(activeBand, kBUsed)] > 0.5f) ? (int)bp(activeBand, activeField(prm - kActiveTarget)) : -1;
+                }
                 if (prm >= 0) {
                     const float v = fromNorm((uint32_t)prm, val / 127.f);
                     engine.p[prm] = v;
@@ -122,6 +137,10 @@ protected:
     }
 
 public:
+    // MIDI Learn targets that follow the band selected in the editor: kActiveTarget + 0 (frequency), 1 (gain), 2 (Q)
+    static constexpr int kActiveTarget = 100000;
+    static int activeField(int i) { return i == 0 ? kBFreq : (i == 1 ? kBGain : kBQ); }
+    static bool validTarget(int t) { return (t >= 0 && t < (int)kParamCount && isSetting((uint32_t)t)) || (t >= kActiveTarget && t < kActiveTarget + 3); }
     Engine engine;                      // public for the UI's direct access to the analyser ring
 
 private:
@@ -137,7 +156,7 @@ private:
         const char* q = v;
         while (*q) {
             int cc = -1, prm = -1;
-            if (std::sscanf(q, "%d:%d", &cc, &prm) == 2 && cc >= 0 && cc < 128 && prm >= 0 && prm < (int)kParamCount) ccMap[cc] = prm;
+            if (std::sscanf(q, "%d:%d", &cc, &prm) == 2 && cc >= 0 && cc < 128 && validTarget(prm)) ccMap[cc] = prm;
             const char* semi = std::strchr(q, ';');
             if (!semi) break;
             q = semi + 1;
@@ -145,7 +164,7 @@ private:
     }
 
     int ccMap[128];
-    int learnTarget = -1, learnSerial = 0;
+    int learnTarget = -1, learnSerial = 0, activeBand = -1;
     float learnEcho = 0;
 
     DISTRHO_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(MicaPlugin)

@@ -8,3 +8,6 @@ tests/features
 tests/fuzz
 tests/presets
 tests/bench
+tests/features2
+tests/compat
+tests/*.log

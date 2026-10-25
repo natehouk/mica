@@ -4,7 +4,7 @@
 #include <complex>
 #include <vector>
 
-namespace mica {
+namespace mica_old {
 
 typedef std::complex<float> cpx;
 
