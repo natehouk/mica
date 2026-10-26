@@ -99,6 +99,7 @@ xattr -dr com.apple.quarantine ~/Library/Audio/Plug-Ins/*/Mica*
   - **ACTIVE BAND** frequency, gain and Q follow whichever band is selected.
 - **Big knobs** with vertical and circular dragging. Double-click to type a value.
 - **39 factory presets** in five categories, plus your own user presets.
+- The preset browser **searches** names and categories as you type, and a star keeps a preset in **Favourites**.
 - **Hover tips** on every control, shape, dot and peak, plus a **HELP window**.
 - **[Full manual](docs/MANUAL.md)**, also in every release zip as `Mica-Manual.html`.
 
@@ -184,6 +185,7 @@ New parameters are only ever appended, so saved sessions and automation keep wor
 
 ## Changelog
 
+- **Unreleased:** the preset browser searches names and categories as you type, and keeps Favourites.
 - **2.0:** Brings Mica up to Pro-Q 4. New in this version:
   - Notch, band pass, tilt shelf, flat tilt and all-pass shapes.
   - Slopes up to 96 dB/oct and brickwall cuts; shelves now have a slope too.

@@ -92,7 +92,7 @@ inline const char* targetTip(int t) {
     case kTipA: case kTipB: return "Mica keeps two complete settings, A and B. Click the other letter to switch and compare by ear.";
     case kTipCopy: return "Copies the current setting to the other slot.";
     case kTipPrev: return "Load the previous preset. The mouse wheel over the preset name also steps through presets.";
-    case kTipPresets: return "Open the preset browser. A * after the name means you have changed it.";
+    case kTipPresets: return "Open the preset browser. A * after the name means you have changed it. In the browser, type to search names and categories, and click a star to keep a preset in Favourites.";
     case kTipNext: return "Load the next preset.";
     case kTipDot: return "Drag to move: left/right = frequency, up/down = gain (resonance for cuts). Mouse wheel = Q. Shift-click adds to the selection, Alt-click switches the band on/off, right-click (or Delete) removes it.";
     case kTipDisplay: return "Double-click, or click on the curve, to add a band. Drag across empty space to select several bands. With the analyser on, peaks in the spectrum light up: click one to grab it as a new band.";
