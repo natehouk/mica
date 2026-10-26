@@ -378,7 +378,7 @@ protected:
         }
         fontSize(22); textLetterSpacing(9); fillColor(C_TEXT); textAlign(ALIGN_LEFT | ALIGN_MIDDLE); text(58, 34, "MICA", nullptr);
         fontSize(10); textLetterSpacing(2.5f); fillColor(C_DIM); text(162, 30, "EQUALIZER", nullptr);
-        fontSize(7.5f); textLetterSpacing(1.8f); fillColor(C_FAINT); text(162, 42, "EPSILON AUDIO  2.0", nullptr);
+        fontSize(7.5f); textLetterSpacing(1.8f); fillColor(C_FAINT); text(162, 42, "EPSILON AUDIO  2.1", nullptr);
         drawPresetBar();
         for (int k = 0; k < 2; ++k) {
             const float x = A_X + k * AB_W; const bool on = history.slot() == k, hot = hoverHeader == 6 + k;

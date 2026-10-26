@@ -1,4 +1,4 @@
-# Mica 2.0 — User Manual
+# Mica 2.1 — User Manual
 
 Mica is a 24-band stereo equalizer. It has:
 

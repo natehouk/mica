@@ -185,7 +185,7 @@ New parameters are only ever appended, so saved sessions and automation keep wor
 
 ## Changelog
 
-- **Unreleased:** the preset browser searches names and categories as you type, and keeps Favourites.
+- **2.1:** the preset browser searches names and categories as you type, and keeps Favourites.
 - **2.0:** Brings Mica up to Pro-Q 4. New in this version:
   - Notch, band pass, tilt shelf, flat tilt and all-pass shapes.
   - Slopes up to 96 dB/oct and brickwall cuts; shelves now have a slope too.
